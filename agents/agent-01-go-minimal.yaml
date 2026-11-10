@@ -11,5 +11,13 @@ spec:
   declarative:
     runtime: go
     modelConfig: default-model-config
+    deployment:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 32Mi
+        limits:
+          cpu: "2"
+          memory: 1Gi
     systemMessage: |
       You are a concise assistant. Respond directly in one or two sentences. Do not ask clarifying questions.

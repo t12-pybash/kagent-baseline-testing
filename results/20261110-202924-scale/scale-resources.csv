@@ -1,0 +1,7 @@
+agent,replicas,total_mem_bytes,mem_per_pod_bytes,total_cpu_millicores,cpu_per_pod_millicores
+baseline-go-minimal,17,117690368,6922962,13.1193,0.7717
+baseline-python-minimal,17,3899564032,229386119,27.0185,1.5893
+baseline-go-k8s-tools,17,136572928,8033701,11.8474,0.6969
+baseline-go-promql,17,117452800,6908988,11.8733,0.6984
+baseline-go-long-context,17,117575680,6916216,14.4076,0.8475
+baseline-go-multiturn,17,117682176,6922480,12.015,0.7068

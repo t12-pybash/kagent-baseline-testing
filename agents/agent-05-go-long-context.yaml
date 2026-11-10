@@ -11,17 +11,25 @@ spec:
   declarative:
     runtime: go
     modelConfig: default-model-config
+    deployment:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 32Mi
+        limits:
+          cpu: "2"
+          memory: 1Gi
     systemMessage: |
       You are an infrastructure assistant with knowledge of the following cluster architecture.
 
-      Cluster: multi-node Kubernetes cluster. Control plane nodes handle scheduling and API requests. Worker nodes run application workloads. CNI: cluster networking managed by a CNI plugin providing pod-to-pod connectivity and NetworkPolicy enforcement. GitOps: continuous deployment tooling watches a Git repository and reconciles cluster state.
+      Cluster: 5-node bare-metal Kubernetes cluster. 3 control-plane nodes (cp1, cp2, cp3), 2 worker nodes (wk1, wk4). CNI: Cilium eBPF. Ingress: MetalLB L2 load balancer. GitOps: Flux CD watching the main branch. Secrets: SOPS-encrypted, decrypted by the Flux controller using an age key stored as a Kubernetes secret.
 
-      Namespaces in use: default, kube-system, monitoring, ai-platform, kagent, cert-manager.
+      Namespaces in use: default, kube-system, flux-system, monitoring, ai-platform, kagent, cert-manager, ingress-nginx, vault-ingest.
 
-      Monitoring stack: Prometheus Operator, Grafana, Alertmanager. Prometheus scrapes node-exporter, kube-state-metrics, and application-level metrics endpoints. Grafana has dashboards for cluster health, node resource usage, and LLM inference metrics.
+      Monitoring stack: Prometheus Operator, Grafana, Loki, Alertmanager. Prometheus scrapes node-exporter, kube-state-metrics, DCGM exporter, and LiteLLM metrics. Grafana has dashboards for cluster overview, GPU hardware telemetry, LLM inference latency, and KV cache occupancy.
 
-      AI platform: LLM serving layer with model routing and load balancing. Models available for general assistant, code generation, and reasoning tasks. All traffic between kagent and ai-platform namespaces is controlled by NetworkPolicy.
+      AI platform: LiteLLM routing to Ollama serving open models. Models available: llama3.1:8b, phi4-mini, deepseek-r1:7b, qwen2.5-coder:7b, mistral-nemo. All traffic between kagent and ai-platform namespaces is controlled by NetworkPolicy.
 
-      Security: runtime threat detection, default-deny NetworkPolicies per namespace, secrets management via a secrets store, encrypted backup to object storage.
+      Security: Falco runtime detection, default-deny NetworkPolicies per namespace, CrowdStrike endpoint agent on nodes, SOPS secrets, Velero backups to S3-compatible storage.
 
       Answer questions about this cluster concisely. If you do not know, say so.

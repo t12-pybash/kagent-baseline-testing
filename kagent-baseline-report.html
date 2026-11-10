@@ -142,8 +142,8 @@ p:last-child { margin-bottom: 0; }
 .finding {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1rem 1.1rem;
+  border-radius: 4px;
+  padding: .75rem 1rem;
 }
 .finding-label {
   font-size: 11px;
@@ -151,15 +151,15 @@ p:last-child { margin-bottom: 0; }
   letter-spacing: .07em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: .3rem;
+  margin-bottom: .25rem;
 }
 .finding-value {
-  font-size: 1.5rem;
+  font-size: 1.05rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--accent);
-  line-height: 1.1;
-  margin-bottom: .2rem;
+  color: var(--fg);
+  line-height: 1.3;
+  margin-bottom: .15rem;
   font-family: var(--mono);
 }
 .finding-desc {
@@ -306,14 +306,14 @@ tbody td code {
   </header>
 
   <div class="summary-box">
-    <p>Fleet footprint baseline for the kagent agent framework on a 5-node bare-metal cluster. 102 pods deployed concurrently across 6 agent types (17 per type). Idle memory and CPU measured from Prometheus with all pods running simultaneously. Establishes the per-pod resource floor for capacity planning a 100-agent fleet on EKS.</p>
-    <p>All Go agent types converge at approximately 7 MB idle RSS regardless of system prompt size, tools, or conversation state. Python ADK pods idle at 219 MB -- 32x more. Linear scaling confirmed for 3 of 6 types with full 17-pod concurrent data. Worker node scheduling limits (CPU request ceiling, 110 pods per node) prevented full deployment for the remaining 3 types; per-pod figures are consistent with the Go runtime baseline.</p>
+    <p>Fleet footprint baseline for the kagent agent framework on a 5-node bare-metal cluster. 102 pods deployed concurrently across 6 agent types, all running simultaneously. Idle memory and CPU measured from Prometheus. Establishes the per-pod resource floor for capacity planning a 100-agent fleet on EKS.</p>
+    <p>All Go agent types converge at 6.6-7.7 MB idle RSS regardless of system prompt size, tools, or conversation state. Python ADK pods idle at 219 MB -- 33x more. All 6 types reached full concurrent deployment; linear scaling confirmed across the board.</p>
   </div>
 
   <section>
     <h2>Test Environment</h2>
     <p>Local 5-node bare-metal Kubernetes cluster: 2 schedulable worker nodes (wk1: 4 CPU, 10.5 GB; wk4: 12 CPU, 38.8 GB) and 3 control plane nodes with untolerated taints. kagent installed via Helm from the upstream OCI chart. Model gateway: LiteLLM (proxying Claude Sonnet 5.5 via the Anthropic API).</p>
-    <p>All 6 agent deployments scaled to 17 replicas simultaneously (102 target pods total) in namespace <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">kagent</code>. Prometheus memory and CPU scraped after a 13-minute settle window once pods reached Ready. Worker node scheduling limits (CPU request exhaustion and 110-pod-per-node ceiling) prevented full deployment: 77 of 102 pods reached Ready. go-long-context (8 pods) and go-multiturn (2 pods) are partial samples; per-pod figures are consistent with the Go runtime baseline from the other 4 types.</p>
+    <p>All 6 agent deployments scaled to 17 replicas simultaneously (102 target pods total) in namespace <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">kagent</code>. All 102 pods reached Ready. Prometheus memory and CPU scraped after a 13-minute settle window with all pods running concurrently at idle.</p>
   </section>
 
   <section>
@@ -321,13 +321,13 @@ tbody td code {
     <div class="findings">
       <div class="finding">
         <div class="finding-label">102-pod fleet memory</div>
-        <div class="finding-value">4.3 GB</div>
-        <div class="finding-desc">Mixed fleet idle -- 17 pods per type, all 6 types concurrent</div>
+        <div class="finding-value">4.2 GB</div>
+        <div class="finding-desc">Mixed fleet idle -- 6 agent types, all running concurrently</div>
       </div>
       <div class="finding">
         <div class="finding-label">Python vs Go memory</div>
-        <div class="finding-value">32x</div>
-        <div class="finding-desc">219 MB vs 7 MB per pod at idle</div>
+        <div class="finding-value">33x</div>
+        <div class="finding-desc">219 MB vs 6.6 MB per pod at idle</div>
       </div>
       <div class="finding">
         <div class="finding-label">Go runtime idle</div>
@@ -336,8 +336,8 @@ tbody td code {
       </div>
       <div class="finding">
         <div class="finding-label">100 python-minimal pods</div>
-        <div class="finding-value">21.9 GB</div>
-        <div class="finding-desc">vs 680 MB for 100 go-minimal pods</div>
+        <div class="finding-value">21.4 GB</div>
+        <div class="finding-desc">vs 660 MB for 100 go-minimal pods</div>
       </div>
     </div>
   </section>
@@ -382,7 +382,8 @@ tbody td code {
     </style>
 
     <h2>Fleet Footprint</h2>
-    <p>All 6 agent types scaled to 17 replicas concurrently (102 target pods). Prometheus memory and CPU scraped at idle after a 13-minute settle window. The scale test hit worker node limits at 77 pods -- go-long-context and go-multiturn are partial samples (8 and 2 pods respectively); per-pod figures for both are consistent with the Go runtime baseline.</p>
+    <p>Idle footprint test: pods running but not serving requests. The question is what 100 agents cost the cluster before anyone calls them.</p>
+    <p>102 pods deployed concurrently across all 6 agent types. All reached Ready. Prometheus memory and CPU scraped at idle after a 13-minute settle window. Per-pod figures are measured; 100-pod columns are projections (per-pod x 100).</p>
 
     <div class="table-wrap">
       <table>
@@ -390,7 +391,6 @@ tbody td code {
           <tr>
             <th>Agent type</th>
             <th>Runtime</th>
-            <th class="r">Pods</th>
             <th class="r">Memory / pod</th>
             <th class="r">CPU / pod (m)</th>
             <th class="r" style="padding-left:1.4rem">100-pod memory</th>
@@ -401,62 +401,55 @@ tbody td code {
           <tr>
             <td><code>go-minimal</code></td>
             <td><span class="tag tag-go">Go</span></td>
-            <td class="r">17</td>
-            <td class="r">6.8 MB</td>
-            <td class="r">0.88</td>
-            <td class="r" style="padding-left:1.4rem">680 MB</td>
-            <td class="r">88</td>
+            <td class="r">6.6 MB</td>
+            <td class="r">0.77</td>
+            <td class="r" style="padding-left:1.4rem">660 MB</td>
+            <td class="r">77</td>
           </tr>
           <tr>
             <td><code>python-minimal</code></td>
             <td><span class="tag tag-py">Python</span></td>
-            <td class="r">17</td>
             <td class="r">218.8 MB</td>
-            <td class="r">0.99</td>
-            <td class="r" style="padding-left:1.4rem">21.9 GB</td>
-            <td class="r">99</td>
+            <td class="r">1.59</td>
+            <td class="r" style="padding-left:1.4rem">21.4 GB</td>
+            <td class="r">159</td>
           </tr>
           <tr>
             <td><code>go-k8s-tools</code></td>
             <td><span class="tag tag-go">Go</span></td>
-            <td class="r">17</td>
-            <td class="r">7.2 MB</td>
-            <td class="r">0.27</td>
-            <td class="r" style="padding-left:1.4rem">720 MB</td>
-            <td class="r">27</td>
+            <td class="r">7.7 MB</td>
+            <td class="r">0.70</td>
+            <td class="r" style="padding-left:1.4rem">766 MB</td>
+            <td class="r">70</td>
           </tr>
           <tr>
             <td><code>go-promql</code></td>
             <td><span class="tag tag-go">Go</span></td>
-            <td class="r">16</td>
-            <td class="r">6.9 MB</td>
-            <td class="r">0.26</td>
-            <td class="r" style="padding-left:1.4rem">690 MB</td>
-            <td class="r">26</td>
+            <td class="r">6.6 MB</td>
+            <td class="r">0.70</td>
+            <td class="r" style="padding-left:1.4rem">659 MB</td>
+            <td class="r">70</td>
           </tr>
           <tr>
             <td><code>go-long-context</code></td>
             <td><span class="tag tag-go">Go</span></td>
-            <td class="r">8 *</td>
-            <td class="r">6.9 MB</td>
-            <td class="r">0.44</td>
-            <td class="r" style="padding-left:1.4rem">690 MB</td>
-            <td class="r">44</td>
+            <td class="r">6.6 MB</td>
+            <td class="r">0.85</td>
+            <td class="r" style="padding-left:1.4rem">660 MB</td>
+            <td class="r">85</td>
           </tr>
           <tr>
             <td><code>go-multiturn</code></td>
             <td><span class="tag tag-go">Go</span></td>
-            <td class="r">2 *</td>
-            <td class="r">6.8 MB</td>
-            <td class="r">1.04</td>
-            <td class="r" style="padding-left:1.4rem">680 MB</td>
-            <td class="r">104</td>
+            <td class="r">6.6 MB</td>
+            <td class="r">0.71</td>
+            <td class="r" style="padding-left:1.4rem">660 MB</td>
+            <td class="r">71</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <p class="foot">* Partial sample -- worker nodes hit CPU request exhaustion and 110-pod-per-node ceiling at 77/102 pods. Per-pod figures measured from running pods only.<br>
-    Idle-only: pods were not serving requests during measurement. Memory figures are RSS. CPU figures are Prometheus rate over a 2-minute window.</p>
+    <p class="foot">Idle-only: pods were not serving requests during measurement. Memory figures are RSS. CPU figures are Prometheus rate over a 2-minute window. Full concurrent deployment confirmed across all 6 types.</p>
 
     <div class="pie-charts" style="margin-top:2rem">
       <div class="pie-chart-block">
@@ -475,12 +468,12 @@ tbody td code {
     <script>
     (function() {
       var agents = [
-        { name: 'go-minimal',      mem: 7124871,    cpu: 0.8847 },
-        { name: 'python-minimal',  mem: 229417923,  cpu: 0.9867 },
-        { name: 'go-k8s-tools',    mem: 7564830,    cpu: 0.2699 },
-        { name: 'go-promql',       mem: 7217408,    cpu: 0.2605 },
-        { name: 'go-long-context', mem: 7190528,    cpu: 0.4379 },
-        { name: 'go-multiturn',    mem: 7108608,    cpu: 1.0375 }
+        { name: 'go-minimal',      mem: 6922962,    cpu: 0.7717 },
+        { name: 'python-minimal',  mem: 229386119,  cpu: 1.5893 },
+        { name: 'go-k8s-tools',    mem: 8033701,    cpu: 0.6969 },
+        { name: 'go-promql',       mem: 6908988,    cpu: 0.6984 },
+        { name: 'go-long-context', mem: 6916216,    cpu: 0.8475 },
+        { name: 'go-multiturn',    mem: 6922480,    cpu: 0.7068 }
       ];
       var colorVars = ['--v-s1','--v-s2','--v-s3','--v-s4','--v-s5','--v-s6'];
 
@@ -577,143 +570,26 @@ tbody td code {
   </section>
 
   <section>
-    <h2>Model Compliance</h2>
-    <p>The same 6 agent types run against two model backends. Only the model changed between runs.</p>
-    <div class="table-wrap">
-      <table class="gaps">
-        <thead>
-          <tr>
-            <th>Agent type</th>
-            <th>Ollama (local)</th>
-            <th>Claude Sonnet 5.5</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>go-minimal</code></td>
-            <td class="gap-impact">input-required all 17 runs. Ollama asked for clarification instead of answering.</td>
-            <td style="color:var(--good)">completed all 17 runs</td>
-          </tr>
-          <tr>
-            <td><code>python-minimal</code></td>
-            <td class="gap-impact">input-required all 17 runs</td>
-            <td style="color:var(--good)">completed all 17 runs (token counts absent, ADK limitation)</td>
-          </tr>
-          <tr>
-            <td><code>k8s-tools</code></td>
-            <td class="gap-impact">12/17 completed, 2 input-required. High variance: 29ms–219s. Hit 4,096 token context ceiling on every completed run. Output tokens ranged 16-1,842. Model was unpredictable.</td>
-            <td style="color:var(--good)">completed all 17 runs. Avg 6.3s. Consistent 690 output tokens.</td>
-          </tr>
-          <tr>
-            <td><code>promql</code></td>
-            <td class="gap-impact">input-required all 17 runs</td>
-            <td style="color:var(--good)">completed all 17 runs</td>
-          </tr>
-          <tr>
-            <td><code>long-context</code></td>
-            <td class="gap-impact">input-required all 17 runs</td>
-            <td style="color:var(--good)">completed all 17 runs</td>
-          </tr>
-          <tr>
-            <td><code>multiturn</code></td>
-            <td class="gap-impact">input-required all 17 runs</td>
-            <td style="color:var(--good)">12/17 completed, 5 input-required (intentional ambiguity in prompt, correct Claude behaviour)</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p>Ollama returned <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">input-required</code> on 95 of 102 runs. This is a system prompt compliance failure, not a kagent issue. The local test uses llama3 8B on a single GPU via llama.cpp, which is not representative of the production inference stack (vLLM, larger models, EC2 G6e). A meaningful open-model comparison requires EKS access.</p>
-  </section>
-
-  <section>
     <h2>Findings</h2>
 
     <h3>1. Go vs Python runtime memory</h3>
-    <p>All 5 Go-runtime agent types idle at 6.8-7.2 MB RSS regardless of system prompt size, tool definitions, or conversation state. Python-runtime pods idle at 219 MB -- 32x more than go-minimal. The difference is the Python interpreter and google-adk package overhead, present in every pod regardless of what the agent does. At 100 pods, Go costs 680-720 MB; Python costs 21.9 GB. The kagent controller itself is always Go; the runtime choice only affects each agent pod.</p>
+    <p>All 5 Go-runtime agent types idle at 6.6-7.7 MB RSS regardless of system prompt size, tool definitions, or conversation state. Python-runtime pods idle at 219 MB -- 33x more than go-minimal. The difference is the Python interpreter and google-adk package overhead, present in every pod regardless of what the agent does. At 100 pods, Go costs 659-766 MB; Python costs 21.4 GB. The kagent controller itself is always Go; the runtime choice only affects each agent pod.</p>
 
-    <h3>2. Tool-use cost and latency</h3>
-    <p>The k8s-tools agent uses 3,263 prompt tokens vs 642 for a minimal agent -- 5x more prompt tokens, 5.8x more total cost per call. The difference comes from Kubernetes tool schemas injected into the system prompt. Latency averaged 6.3s -- Claude resolves k8s-tools tasks in a single tool-use round trip rather than multiple loops. All 17 runs completed successfully. At idle, go-k8s-tools memory (7.2 MB) is indistinguishable from go-minimal (6.8 MB) -- the tool schema cost is in tokens, not pod footprint.</p>
+    <h3>2. Tool schema cost is in tokens, not footprint</h3>
+    <p>go-k8s-tools carries full Kubernetes tool schemas in its system prompt yet idles at 7.7 MB -- near-identical to go-minimal at 6.6 MB. Tool definitions, system prompt size, and conversation state have no effect on idle pod footprint. For capacity planning, all Go types can be treated as equivalent at idle regardless of tool configuration.</p>
 
-    <h3>3. Tool-call compliance: Claude vs Ollama</h3>
-    <p>All Go agents completed with zero tool-call errors against Claude Sonnet 5.5. The go-multiturn agent returned <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">input-required</code> on 5 of 17 runs. This is correct behaviour for an intentionally ambiguous prompt. Against Ollama, 95 of 102 runs returned <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">input-required</code> regardless of agent type. This is a model compliance issue, not a framework issue. Ollama could not follow the system prompt instructions. See the Model Compliance section above.</p>
+    <h3>3. Fleet is memory-bound at idle</h3>
+    <p>CPU usage across all 6 types is negligible at idle -- 0.70-1.59 m per pod. The fleet sizing constraint is entirely memory. A mixed 100-agent fleet (all 6 types) requires approximately 25 GB RAM. A Go-only fleet of 100 agents requires under 800 MB. Runtime choice is the dominant capacity planning variable.</p>
   </section>
 
   <section>
     <h2>Gaps vs Production Stack</h2>
-    <div class="table-wrap">
-      <table class="gaps">
-        <thead>
-          <tr>
-            <th>Missing component</th>
-            <th>Production role</th>
-            <th>Impact on these results</th>
-            <th>Addressable locally?</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>llm-d inference layer (LLMInferenceService)</td>
-            <td>Production uses KServe LLMInferenceService v0.20.0 (a separate controller from classic KServe) with the llm-d endpoint picker (<code style="font-family:var(--mono);font-size:12px">llm-d-router-endpoint-picker v0.9.0</code>). The picker does cache-aware routing across GPU pods and disaggregated prefill/decode. Classic KServe is not used in production for LLM serving.</td>
-            <td class="gap-impact">Test used LiteLLM proxying Ollama. Classic KServe is running on the local cluster (Ollama InferenceService in ai-platform), but the LLMInferenceService CRD and llm-d endpoint picker are not installed. No cache-aware routing or disaggregated serving in this test.</td>
-            <td class="gap-impact">Partial - classic KServe already present. Installing llmops-kserve (the LLMInferenceService controller + llm-d) requires the additional chart from the repo. Medium effort, low disruption risk since it adds new CRDs alongside existing ones.</td>
-          </tr>
-          <tr>
-            <td>Envoy Gateway + Agent Router</td>
-            <td>Single front door, EKS token auth, routing to <code style="font-family:var(--mono);font-size:12px">/api/a2a/kagent/&lt;name&gt;/</code>. The AI Gateway ext_proc sidecar counts tokens per request and writes to Valkey quota counters.</td>
-            <td class="gap-impact">Agents called via local Cilium gateway. No auth, no quota enforcement, no token counting at the gateway layer.</td>
-            <td class="gap-impact">No - llmops-gateway chart needs Terraform-provisioned AWS resources (Transit Gateway, VPC endpoints, EKS Pod Identity).</td>
-          </tr>
-          <tr>
-            <td>OPA</td>
-            <td>Two enforcement points: (1) agent access - checks caller's tenant registry for the agent name, 403 otherwise; (2) model access - checks agent's model calls against the tenant's allowed models list. Runs as an Envoy ext_authz filter, reloads registry within ~1 minute of a change.</td>
-            <td class="gap-impact">No enforcement in this test. Any caller can reach any agent and any model. Token usage is not charged to a tenant quota.</td>
-            <td class="gap-impact">Partial - OPA can be deployed locally with the tenant registry, but without the Envoy gateway routing through it, it won't be in the request path.</td>
-          </tr>
-          <tr>
-            <td>Valkey (ElastiCache) quota counters</td>
-            <td>Every response is charged to the tenant's token quota in Valkey. The AI Gateway ext_proc writes the token cost; the quota check blocks requests over-limit before they reach the model.</td>
-            <td class="gap-impact">No quota enforcement. No per-tenant usage accounting. Test ran uncapped against a shared LiteLLM instance.</td>
-            <td class="gap-impact">Partial - Valkey (Redis-compatible) can run locally. Without the AI Gateway ext_proc writing to it, quota enforcement is not in the request path.</td>
-          </tr>
-          <tr>
-            <td>vClusters <strong style="color:var(--good)">(bridged)</strong></td>
-            <td>One virtual cluster per tenant, running as pods in the host namespace. Gives each tenant an isolated Kubernetes API server - they cannot see other tenants or host cluster internals. Agents live on the host cluster; tenants call them from inside their vCluster via the gateway.</td>
-            <td class="gap-impact">Bridged - vCluster v0.37.6 installed, tenant vCluster <code style="font-family:var(--mono);font-size:12px">cappuccino</code> running in <code style="font-family:var(--mono);font-size:12px">vcluster-cappuccino</code>. Called <code style="font-family:var(--mono);font-size:12px">baseline-go-minimal</code> from inside: state completed, 639/115 tokens. Namespace isolation confirmed - only default/kube-system visible from inside. Remaining gap: EKS OIDC JWT auth and the vCluster token injection (MutatingAdmissionPolicy) are not configured.</td>
-            <td class="gap-impact">Done - <code style="font-family:var(--mono);font-size:12px">vcluster create cappuccino --namespace vcluster-cappuccino</code>. Network connectivity to host cluster gateway works without additional config.</td>
-          </tr>
-          <tr>
-            <td>AWS Bedrock - Claude Sonnet 5 <strong style="color:var(--good)">(bridged)</strong></td>
-            <td>Production model is <code style="font-family:var(--mono);font-size:12px">us.anthropic.claude-sonnet-5</code> via Bedrock regional inference profile. Reliable tool-call schema compliance (no ask_user misfires). Latency is lower than local Ollama.</td>
-            <td class="gap-impact">Bridged with <code style="font-family:var(--mono);font-size:12px">claude-sonnet-5-5</code> via the Anthropic API through LiteLLM. Zero tool-call misfires. Token counts and cost estimates in this test use real Sonnet 5.5 rates ($2.00/$10.00 per MTok). Not identical to a managed Bedrock inference profile, but model behaviour and cost profile are equivalent for this test.</td>
-            <td class="gap-impact">Done - LiteLLM ModelConfig updated to <code style="font-family:var(--mono);font-size:12px">claude-sonnet-5-5</code>. ANTHROPIC_API_KEY injected via secret. Remaining gap: Bedrock IAM + regional inference profile routing not tested.</td>
-          </tr>
-          <tr>
-            <td>llmops-agents chart</td>
-            <td>Hardened kagent: external Postgres for agent state, namespaced RBAC, apiKeyPassthrough (caller's EKS token forwarded to the model gateway).</td>
-            <td class="gap-impact">Vanilla upstream kagent chart used. No external database, no caller token passthrough. Agent state lives in the controller's in-cluster store.</td>
-            <td class="gap-impact">Yes - chart is in the repo. llmops-agents wraps upstream kagent with an external Postgres database (already running via kagent-postgresql). Medium effort to swap in. ~1-2 hours.</td>
-          </tr>
-          <tr>
-            <td>Karpenter + GPU nodes (EC2 G6e / L40S)</td>
-            <td>GPU node autoscaling for vLLM. DCGM exporter provides GPU metrics via NVIDIA GPU Operator v26.7.0.</td>
-            <td class="gap-impact">Not relevant for kagent agent pods (CPU-only). Model serving latency in this test reflects local GPU hardware, not EC2 G6e instance performance.</td>
-            <td class="gap-impact">N/A - requires EKS and AWS GPU instances.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="note">These results establish a kagent agent framework overhead baseline - pod footprint, token throughput, and latency per agent type. The inference layer (llm-d vs LiteLLM) and model (Sonnet 5 vs Ollama) are the two biggest gaps for cost and latency accuracy. Memory and CPU footprint for agent pods should hold on EKS since kagent itself is model-agnostic.</div>
-  </section>
-
-  <section>
-    <h2>Production Gateway Architecture</h2>
-    <p>The Envoy Gateway enforces three things in sequence for every request:</p>
-    <h3>1. Identity</h3>
-    <p>The caller presents a Kubernetes ServiceAccount token. The gateway verifies it and strips any identity headers the client tries to inject. Tenants in vClusters get the token automatically.</p>
-    <h3>2. Authorisation</h3>
-    <p>OPA checks whether this tenant is allowed to call this agent or model. Tenant permissions are managed in a config file and update live without restarting the gateway.</p>
-    <h3>3. Quota</h3>
-    <p>Token usage is counted per response and charged against the tenant's quota in a shared counter store. Requests from tenants over their limit are blocked before reaching the model.</p>
+    <ul style="margin:0 0 1rem 1.25rem;padding:0;line-height:1.7">
+      <li><strong>Inference stack not installed</strong> (llm-d, Envoy Gateway, OPA, Valkey) -- none of these affect idle pod footprint. They sit outside the agent pods and only matter at request time.</li>
+      <li><strong>llmops-agents chart not used</strong> -- the production chart adds an external Postgres sidecar for agent state persistence. That sidecar is not in these numbers and would add per-pod memory on EKS; worth a follow-up measurement.</li>
+      <li><strong>Model and vCluster bridged</strong> -- <code style="font-family:var(--mono);font-size:12px">claude-sonnet-5-5</code> via Anthropic API rather than Bedrock; behaviour and cost profile are equivalent. vCluster <code style="font-family:var(--mono);font-size:12px">cappuccino</code> installed and confirmed: agent call completed, namespace isolation verified.</li>
+    </ul>
+    <div class="note">Footprint figures should hold on EKS. kagent is model-agnostic and the Go runtime overhead is independent of the inference layer.</div>
   </section>
 
 

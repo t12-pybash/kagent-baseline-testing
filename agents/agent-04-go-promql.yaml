@@ -11,5 +11,13 @@ spec:
   declarative:
     runtime: go
     modelConfig: default-model-config
+    deployment:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 32Mi
+        limits:
+          cpu: "2"
+          memory: 1Gi
     systemMessage: |
       You are a PromQL expert. When given a description of a monitoring need, respond with a valid PromQL query and a one-sentence explanation. Nothing else.

@@ -1,6 +1,8 @@
 # kagent baseline test
 
-A load and resource baseline for 6 kagent agent types. Measures pod memory, CPU, token usage, latency, and cost per run against a live kagent installation.
+Idle pod footprint baseline for 6 kagent agent types. Measures memory RSS and CPU per pod at scale (17 replicas per type, 102 pods concurrent) against a live kagent installation.
+
+See `kagent-baseline-report.html` for the full analysis and results.
 
 ## Agent types
 
@@ -15,33 +17,41 @@ A load and resource baseline for 6 kagent agent types. Measures pod memory, CPU,
 
 ## Prerequisites
 
-- kagent installed and agents deployed (`kubectl apply -f agents/`)
-- Each agent reachable via its A2A HTTP endpoint
-- Prometheus available for resource scraping
+- kagent installed (`kubectl apply -f agents/`)
+- Prometheus available and scraped -- kube-state-metrics and cAdvisor required
 - `kubectl` context pointing at the target cluster
-- `curl`, `python3` on the machine running the script
+- `curl`, `python3` available on the machine running the script
 
-## Running
+## Running the scale test
 
 ```bash
-export KAGENT_DOMAIN="kagent.example.com"      # agent hostname suffix
-export PROM_URL="http://prometheus:9090"        # Prometheus base URL
-export LITELLM_URL="http://litellm:4000"        # optional, Python ADK token fallback
-
-chmod +x run-baseline.sh
-./run-baseline.sh
+export PROM_URL="http://prometheus-operated.monitoring.svc.cluster.local:9090"
+chmod +x run-scale-test.sh
+./run-scale-test.sh
 ```
 
-Results are written to `results/<timestamp>/`:
-- `results.csv` -- per-run state, token counts, latency
-- `resources.csv` -- pod memory and CPU at end of run
+The script scales all 6 deployments to 17 replicas, waits for all 102 pods to reach Ready, settles 150s for the Prometheus `rate()` window to stabilise, scrapes aggregate memory and CPU, prints a summary, then scales back down to 1 replica.
 
-## Manifests
+Results are written to `results/<timestamp>-scale/scale-resources.csv`.
 
-`manifests/network/httproutes.yaml` exposes each agent via a Gateway API HTTPRoute. Replace the `<gateway-name>`, `<gateway-namespace>`, and `<cluster-domain>` placeholders before applying.
+## Reference results
 
-`manifests/network/allow-from-kagent.yaml` is a NetworkPolicy allowing the kagent namespace to reach a model serving endpoint (LiteLLM or equivalent) in the ai-platform namespace.
+`results/20261110-202924-scale/scale-resources.csv` contains the reference run on a 2-node bare-metal cluster (bare-metal results should be representative -- kagent's Go runtime overhead is independent of the underlying infrastructure).
 
-## Results
+| Agent type | Mem/pod | CPU/pod |
+|------------|---------|---------|
+| go-minimal | 6.6 MB | 0.77 m |
+| python-minimal | 218.8 MB | 1.59 m |
+| go-k8s-tools | 7.7 MB | 0.70 m |
+| go-promql | 6.6 MB | 0.70 m |
+| go-long-context | 6.6 MB | 0.85 m |
+| go-multiturn | 6.6 MB | 0.71 m |
 
-`results/20261109-153609/` contains the reference run against Claude Sonnet 5.5 (102 total agent runs, 17 per type). See `kagent-baseline-report.html` for the full analysis.
+## Agent resource requests
+
+All agent CRs are configured with minimal resource requests to allow high-density scheduling:
+
+- Go types: `cpu: 1m`, `memory: 32Mi` (limits: 2 CPU, 1Gi)
+- Python type: `cpu: 1m`, `memory: 256Mi` (limits: 2 CPU, 1Gi)
+
+Adjust `modelConfig` in each agent YAML to match your cluster's ModelConfig name.

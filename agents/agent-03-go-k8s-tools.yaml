@@ -11,6 +11,14 @@ spec:
   declarative:
     runtime: go
     modelConfig: default-model-config
+    deployment:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 32Mi
+        limits:
+          cpu: "2"
+          memory: 1Gi
     tools:
     - type: McpServer
       mcpServer:
