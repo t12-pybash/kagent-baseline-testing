@@ -1,0 +1,123 @@
+# HTTPRoutes to expose each baseline agent via the cluster gateway.
+# Replace <gateway-name>, <gateway-namespace>, and <cluster-domain> for your environment.
+# On EKS with Envoy AI Gateway, the parentRef will point to your Envoy Gateway instance.
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: baseline-go-minimal
+  namespace: kagent
+spec:
+  parentRefs:
+  - name: <gateway-name>
+    namespace: <gateway-namespace>
+  hostnames:
+  - "baseline-go-minimal.<cluster-domain>"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: baseline-go-minimal
+      port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: baseline-python-minimal
+  namespace: kagent
+spec:
+  parentRefs:
+  - name: <gateway-name>
+    namespace: <gateway-namespace>
+  hostnames:
+  - "baseline-python-minimal.<cluster-domain>"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: baseline-python-minimal
+      port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: baseline-go-k8s-tools
+  namespace: kagent
+spec:
+  parentRefs:
+  - name: <gateway-name>
+    namespace: <gateway-namespace>
+  hostnames:
+  - "baseline-go-k8s-tools.<cluster-domain>"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: baseline-go-k8s-tools
+      port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: baseline-go-promql
+  namespace: kagent
+spec:
+  parentRefs:
+  - name: <gateway-name>
+    namespace: <gateway-namespace>
+  hostnames:
+  - "baseline-go-promql.<cluster-domain>"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: baseline-go-promql
+      port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: baseline-go-long-context
+  namespace: kagent
+spec:
+  parentRefs:
+  - name: <gateway-name>
+    namespace: <gateway-namespace>
+  hostnames:
+  - "baseline-go-long-context.<cluster-domain>"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: baseline-go-long-context
+      port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: baseline-go-multiturn
+  namespace: kagent
+spec:
+  parentRefs:
+  - name: <gateway-name>
+    namespace: <gateway-namespace>
+  hostnames:
+  - "baseline-go-multiturn.<cluster-domain>"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: baseline-go-multiturn
+      port: 8080

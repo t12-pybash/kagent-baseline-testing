@@ -1,0 +1,15 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: baseline-go-minimal
+  namespace: kagent
+  labels:
+    baseline.test/type: "01-go-minimal"
+spec:
+  type: Declarative
+  description: Baseline agent - Go runtime, no tools, minimal system prompt
+  declarative:
+    runtime: go
+    modelConfig: default-model-config
+    systemMessage: |
+      You are a concise assistant. Respond directly in one or two sentences. Do not ask clarifying questions.

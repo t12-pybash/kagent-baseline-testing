@@ -1,0 +1,15 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: baseline-python-minimal
+  namespace: kagent
+  labels:
+    baseline.test/type: "02-python-minimal"
+spec:
+  type: Declarative
+  description: Baseline agent - Python runtime, no tools, minimal system prompt
+  declarative:
+    runtime: python
+    modelConfig: default-model-config
+    systemMessage: |
+      You are a concise assistant. Respond directly in one or two sentences. Do not ask clarifying questions.

@@ -1,0 +1,15 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: baseline-go-promql
+  namespace: kagent
+  labels:
+    baseline.test/type: "04-go-promql"
+spec:
+  type: Declarative
+  description: Baseline agent - Go runtime, no tools, domain-specific PromQL prompt
+  declarative:
+    runtime: go
+    modelConfig: default-model-config
+    systemMessage: |
+      You are a PromQL expert. When given a description of a monitoring need, respond with a valid PromQL query and a one-sentence explanation. Nothing else.

@@ -1,0 +1,774 @@
+<title>kagent Baseline Test</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* Layout: single-column document, max-width 860px, section-based */
+:root {
+  --bg:       #f7f8fa;
+  --surface:  #ffffff;
+  --fg:       #1c1f26;
+  --muted:    #5a6075;
+  --border:   #dde1ea;
+  --accent:   #3451b2;
+  --accent-bg:#eef1fb;
+  --warn:     #c05c00;
+  --warn-bg:  #fff4e6;
+  --good:     #1a6b3a;
+  --good-bg:  #edfaf2;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'Inter', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:       #13151a;
+    --surface:  #1e2129;
+    --fg:       #e4e7f0;
+    --muted:    #8891aa;
+    --border:   #2d3140;
+    --accent:   #7b96f5;
+    --accent-bg:#1e2440;
+    --warn:     #f5a623;
+    --warn-bg:  #2a1f0a;
+    --good:     #4ade80;
+    --good-bg:  #0d2318;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:       #13151a;
+  --surface:  #1e2129;
+  --fg:       #e4e7f0;
+  --muted:    #8891aa;
+  --border:   #2d3140;
+  --accent:   #7b96f5;
+  --accent-bg:#1e2440;
+  --warn:     #f5a623;
+  --warn-bg:  #2a1f0a;
+  --good:     #4ade80;
+  --good-bg:  #0d2318;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--fg);
+  margin: 0;
+  padding-block: 2rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.doc {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* Header */
+.doc-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+.doc-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 .5rem;
+}
+.doc-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 .75rem;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.doc-meta {
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.5rem;
+}
+.doc-meta span { white-space: nowrap; }
+
+/* Sections */
+section { margin-bottom: 2.5rem; }
+
+h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  padding-bottom: .4rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+}
+
+h3 {
+  font-size: .95rem;
+  font-weight: 600;
+  margin: 1.25rem 0 .5rem;
+  color: var(--fg);
+}
+
+p { margin: 0 0 .85rem; }
+p:last-child { margin-bottom: 0; }
+
+/* Summary box */
+.summary-box {
+  background: var(--accent-bg);
+  border-left: 3px solid var(--accent);
+  padding: 1rem 1.25rem;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 2.5rem;
+  font-size: 14px;
+}
+.summary-box p { margin: 0 0 .5rem; }
+.summary-box p:last-child { margin: 0; }
+
+/* Finding cards */
+.findings {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.finding {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+}
+.finding-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .3rem;
+}
+.finding-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  line-height: 1.1;
+  margin-bottom: .2rem;
+  font-family: var(--mono);
+}
+.finding-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Results table */
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+  min-width: 600px;
+}
+thead th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: .5rem .75rem;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+thead th.r { text-align: right; }
+tbody tr { border-bottom: 1px solid var(--border); }
+tbody tr:last-child { border-bottom: none; }
+tbody td {
+  padding: .6rem .75rem;
+  color: var(--fg);
+  vertical-align: middle;
+}
+tbody td.r { text-align: right; font-family: var(--mono); font-size: 13px; }
+tbody td code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: var(--mono);
+}
+.tag-go   { background: var(--good-bg);  color: var(--good); }
+.tag-py   { background: var(--warn-bg);  color: var(--warn); }
+.na       { color: var(--muted); font-style: italic; }
+.foot     { font-size: 12px; color: var(--muted); margin-top: .75rem; }
+
+/* Gaps table */
+.gaps { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.gaps th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: .4rem .75rem;
+  border-bottom: 2px solid var(--border);
+}
+.gaps td { padding: .55rem .75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.gaps tr:last-child td { border-bottom: none; }
+.gap-impact { font-size: 12px; color: var(--muted); }
+
+/* Next steps list */
+.steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+.steps li {
+  display: flex;
+  gap: .75rem;
+  align-items: flex-start;
+  font-size: 14px;
+}
+.step-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+/* Notes */
+.note {
+  background: var(--warn-bg);
+  border-left: 3px solid var(--warn);
+  padding: .75rem 1rem;
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+  color: var(--fg);
+  margin-top: 1rem;
+}
+
+@media (max-width: 520px) {
+  .doc-title { font-size: 1.4rem; }
+  .findings { grid-template-columns: 1fr 1fr; }
+}
+
+@media print {
+  body { background: #fff; color: #000; padding: 0; font-size: 13px; }
+  .doc { max-width: 100%; }
+  .doc-header { border-bottom: 2px solid #ccc; }
+  .summary-box { background: #f0f4ff; border-left: 3px solid #3451b2; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .note { background: #fff4e6; border-left: 3px solid #c05c00; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .finding { border: 1px solid #ccc; break-inside: avoid; }
+  .findings { grid-template-columns: repeat(4, 1fr); }
+  .tag-go { background: #edfaf2; color: #1a6b3a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .tag-py { background: #fff4e6; color: #c05c00; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .gap-impact { color: #555; }
+  table { break-inside: auto; }
+  tr { break-inside: avoid; }
+  section { break-inside: avoid; }
+  h2 { break-after: avoid; }
+  h3 { break-after: avoid; }
+  .table-wrap { overflow: visible; }
+}
+</style>
+
+<div class="doc">
+
+  <header class="doc-header">
+    <p class="doc-eyebrow">AI Infrastructure</p>
+    <h1 class="doc-title">kagent Baseline Test</h1>
+    <div class="doc-meta">
+      <span>2026-11-09</span>
+      <span>Author: Ciaran Donegan</span>
+      <span>kagent v0.10.6</span>
+      <span>Status: Continuous</span>
+    </div>
+  </header>
+
+  <div class="summary-box">
+    <p>Baseline performance test of the kagent agent framework on a 5-node bare-metal cluster using LiteLLM proxying Claude Sonnet 5.5 (via the Anthropic API) as the model gateway. 102 total agent runs across 6 agent configurations (17 runs per type). Measured token cost, inference latency, and pod memory and CPU for each type.</p>
+    <p>Results establish a cost and resource footprint baseline for kagent agents against a production-equivalent model. All Go agents completed with zero tool-call errors. This is a local test - the production inference layer (llm-d), gateway (Envoy + AI Gateway), and tenancy (vClusters) are not present. Gaps are documented below.</p>
+  </div>
+
+  <section>
+    <h2>Test Environment</h2>
+    <p>Local 5-node bare-metal Kubernetes cluster. kagent installed via Helm from the upstream OCI chart. Model gateway: LiteLLM (proxying Claude Sonnet 5.5 via the Anthropic API). Agents called via the A2A protocol (JSON-RPC 2.0 over HTTPS) through a Cilium Gateway API ingress - not through the production Envoy gateway.</p>
+    <p>All agents in namespace <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">kagent</code>, each exposed at <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">&lt;agent&gt;.local.dc.io</code> via HTTPRoute. Prometheus used for pod memory and CPU. 17 runs per agent type with a unique prompt per run to prevent session caching.</p>
+  </section>
+
+  <section>
+    <h2>Key Figures</h2>
+    <div class="findings">
+      <div class="finding">
+        <div class="finding-label">Memory - Go runtime</div>
+        <div class="finding-value">~10 MB</div>
+        <div class="finding-desc">Idle RSS per agent pod</div>
+      </div>
+      <div class="finding">
+        <div class="finding-label">Memory - Python runtime</div>
+        <div class="finding-value">235 MB</div>
+        <div class="finding-desc">25x more than Go at idle</div>
+      </div>
+      <div class="finding">
+        <div class="finding-label">Tool-use cost multiplier</div>
+        <div class="finding-value">5.8x</div>
+        <div class="finding-desc">k8s-tools vs minimal per call (Claude Sonnet 5.5)</div>
+      </div>
+      <div class="finding">
+        <div class="finding-label">Tool-use avg latency</div>
+        <div class="finding-value">6.3 s</div>
+        <div class="finding-desc">k8s-tools single-pass with Claude</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Results</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Agent type</th>
+            <th>Runtime</th>
+            <th class="r">Prompt tok</th>
+            <th class="r">Output tok</th>
+            <th class="r">Avg latency</th>
+            <th class="r">Memory</th>
+            <th class="r">CPU (m)</th>
+            <th class="r">Cost / run</th>
+            <th class="r">Cost / 1k runs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>go-minimal</code></td>
+            <td><span class="tag tag-go">Go</span></td>
+            <td class="r">642</td>
+            <td class="r">105</td>
+            <td class="r">2.0 s *</td>
+            <td class="r">9.5 MB</td>
+            <td class="r">0.75</td>
+            <td class="r">€0.00215</td>
+            <td class="r">€2.15</td>
+          </tr>
+          <tr>
+            <td><code>python-minimal</code></td>
+            <td><span class="tag tag-py">Python</span></td>
+            <td class="r na">N/A **</td>
+            <td class="r na">N/A **</td>
+            <td class="r">2.0 s</td>
+            <td class="r">235.0 MB</td>
+            <td class="r">8.33</td>
+            <td class="r na">N/A **</td>
+            <td class="r na">N/A **</td>
+          </tr>
+          <tr>
+            <td><code>k8s-tools</code></td>
+            <td><span class="tag tag-go">Go</span></td>
+            <td class="r">3,263</td>
+            <td class="r">690</td>
+            <td class="r">6.3 s</td>
+            <td class="r">12.2 MB</td>
+            <td class="r">3.34</td>
+            <td class="r">€0.01235</td>
+            <td class="r">€12.35</td>
+          </tr>
+          <tr>
+            <td><code>promql</code></td>
+            <td><span class="tag tag-go">Go</span></td>
+            <td class="r">665</td>
+            <td class="r">105</td>
+            <td class="r">2.0 s</td>
+            <td class="r">10.1 MB</td>
+            <td class="r">0.99</td>
+            <td class="r">€0.00219</td>
+            <td class="r">€2.19</td>
+          </tr>
+          <tr>
+            <td><code>long-context</code></td>
+            <td><span class="tag tag-go">Go</span></td>
+            <td class="r">1,177</td>
+            <td class="r">126</td>
+            <td class="r">2.2 s</td>
+            <td class="r">10.2 MB</td>
+            <td class="r">1.19</td>
+            <td class="r">€0.00332</td>
+            <td class="r">€3.32</td>
+          </tr>
+          <tr>
+            <td><code>multiturn</code></td>
+            <td><span class="tag tag-go">Go</span></td>
+            <td class="r">656</td>
+            <td class="r">260</td>
+            <td class="r">3.1 s</td>
+            <td class="r">10.9 MB</td>
+            <td class="r">1.35</td>
+            <td class="r">€0.00360</td>
+            <td class="r">€3.60</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="foot">** Python ADK does not surface <code style="font-family:var(--mono);font-size:11px">adk_usage_metadata</code> in A2A responses. All 17 python-minimal runs completed (state: completed); only token counts are absent.<br>
+    * go-minimal reported avg is 1.75s including 2 LiteLLM Redis cache hits (108/116ms). True real-call avg is 2.0s (p50 of remaining 15 runs).<br>
+    Pricing: Claude Sonnet 5.5 $2.00/1M input, $10.00/1M output. EUR/USD 0.92. 17 runs per agent, cache-busted with unique prompt suffix per run.</p>
+  </section>
+
+  <section class="viz-root">
+    <style>
+      .viz-root {
+        --v-s1: #2a78d6; --v-s2: #eb6834; --v-s3: #1baf7a;
+        --v-s4: #eda100; --v-s5: #e87ba4; --v-s6: #008300;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) .viz-root {
+          --v-s1: #3987e5; --v-s2: #d95926; --v-s3: #199e70;
+          --v-s4: #c98500; --v-s5: #d55181; --v-s6: #008300;
+        }
+      }
+      :root[data-theme="dark"] .viz-root {
+        --v-s1: #3987e5; --v-s2: #d95926; --v-s3: #199e70;
+        --v-s4: #c98500; --v-s5: #d55181; --v-s6: #008300;
+      }
+      .pie-charts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        align-items: flex-start;
+        margin-top: 1.25rem;
+        margin-bottom: 0.5rem;
+      }
+      .pie-chart-block { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+      .pie-chart-title { font-weight: 600; font-size: 0.80rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+      .pie-legend { display: flex; flex-direction: column; gap: 0.45rem; padding-top: 1.4rem; }
+      .pie-legend-item { display: flex; align-items: center; gap: 0.45rem; font-size: 0.80rem; color: var(--fg); }
+      .pie-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+      #pie-tooltip {
+        position: fixed; background: var(--surface); border: 1px solid var(--border);
+        border-radius: 6px; padding: 0.4rem 0.7rem; font-size: 0.78rem;
+        pointer-events: none; opacity: 0; transition: opacity 0.12s;
+        z-index: 100; color: var(--fg); box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+        line-height: 1.5;
+      }
+      @media print { #pie-tooltip { display: none !important; } }
+    </style>
+
+    <h2>Resource Footprint at Scale</h2>
+    <p>Idle pod memory and CPU recorded after all 17 runs completed per type. The distribution is dominated by the Python ADK runtime. At 100 agents per type the difference in footprint between Go and Python runtimes is the primary capacity planning input.</p>
+
+    <div class="pie-charts">
+      <div class="pie-chart-block">
+        <div class="pie-chart-title">Memory per pod</div>
+        <svg id="mem-pie" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="Memory share by agent type"></svg>
+      </div>
+      <div class="pie-chart-block">
+        <div class="pie-chart-title">CPU per pod (millicores)</div>
+        <svg id="cpu-pie" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="CPU share by agent type"></svg>
+      </div>
+      <div class="pie-legend" id="pie-legend"></div>
+    </div>
+
+    <div id="pie-tooltip"></div>
+
+    <div class="table-wrap" style="margin-top:1.5rem">
+      <table>
+        <thead>
+          <tr>
+            <th>Agent type</th>
+            <th class="r">Memory / pod</th>
+            <th class="r">CPU / pod (m)</th>
+            <th class="r" style="padding-left:1.4rem">Memory x 100 pods</th>
+            <th class="r">CPU x 100 pods (m)</th>
+          </tr>
+        </thead>
+        <tbody id="scale-tbody"></tbody>
+      </table>
+    </div>
+
+    <script>
+    (function() {
+      var agents = [
+        { name: 'go-minimal',      mem: 9908224,    cpu: 0.753 },
+        { name: 'python-minimal',  mem: 246427648,  cpu: 8.333 },
+        { name: 'go-k8s-tools',    mem: 12828672,   cpu: 3.343 },
+        { name: 'go-promql',       mem: 10620928,   cpu: 0.994 },
+        { name: 'go-long-context', mem: 10653696,   cpu: 1.191 },
+        { name: 'go-multiturn',    mem: 11395072,   cpu: 1.349 }
+      ];
+      var colorVars = ['--v-s1','--v-s2','--v-s3','--v-s4','--v-s5','--v-s6'];
+
+      function getColors(root) {
+        var cs = getComputedStyle(root);
+        return colorVars.map(function(v) { return cs.getPropertyValue(v).trim(); });
+      }
+
+      function fmtMem(bytes) {
+        if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + ' GB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+      }
+
+      function drawPie(svgId, values, colors, labels, fmtVal) {
+        var svg = document.getElementById(svgId);
+        if (!svg) return;
+        var total = values.reduce(function(a, b) { return a + b; }, 0);
+        var cx = 100, cy = 100, r = 90;
+        var start = -Math.PI / 2;
+        var tooltip = document.getElementById('pie-tooltip');
+
+        values.forEach(function(val, i) {
+          var angle = (val / total) * 2 * Math.PI;
+          var end = start + angle;
+          var x1 = cx + r * Math.cos(start);
+          var y1 = cy + r * Math.sin(start);
+          var x2 = cx + r * Math.cos(end);
+          var y2 = cy + r * Math.sin(end);
+          var large = angle > Math.PI ? 1 : 0;
+
+          var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', 'M' + cx + ',' + cy +
+            ' L' + x1.toFixed(2) + ',' + y1.toFixed(2) +
+            ' A' + r + ',' + r + ' 0 ' + large + ' 1 ' +
+            x2.toFixed(2) + ',' + y2.toFixed(2) + ' Z');
+          path.setAttribute('fill', colors[i]);
+          path.style.stroke = 'var(--surface)';
+          path.style.strokeWidth = '2px';
+          path.style.cursor = 'pointer';
+
+          path.addEventListener('mouseenter', function(e) {
+            tooltip.innerHTML = '<strong>' + labels[i] + '</strong><br>' +
+              fmtVal(val) + ' (' + ((val / total) * 100).toFixed(1) + '%)';
+            tooltip.style.opacity = '1';
+          });
+          path.addEventListener('mousemove', function(e) {
+            tooltip.style.left = (e.clientX + 14) + 'px';
+            tooltip.style.top  = (e.clientY - 8)  + 'px';
+          });
+          path.addEventListener('mouseleave', function() {
+            tooltip.style.opacity = '0';
+          });
+
+          svg.appendChild(path);
+          start = end;
+        });
+      }
+
+      function buildLegend(colors) {
+        var legend = document.getElementById('pie-legend');
+        if (!legend) return;
+        agents.forEach(function(a, i) {
+          var item = document.createElement('div');
+          item.className = 'pie-legend-item';
+          var dot = document.createElement('span');
+          dot.className = 'pie-legend-dot';
+          dot.style.background = colors[i];
+          var lbl = document.createElement('span');
+          lbl.textContent = a.name;
+          item.appendChild(dot);
+          item.appendChild(lbl);
+          legend.appendChild(item);
+        });
+      }
+
+      function buildTable(colors) {
+        var tbody = document.getElementById('scale-tbody');
+        if (!tbody) return;
+        agents.forEach(function(a, i) {
+          var tr = document.createElement('tr');
+          var dot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;' +
+            'background:' + colors[i] + ';margin-right:5px;vertical-align:middle"></span>';
+          tr.innerHTML =
+            '<td>' + dot + '<code>' + a.name + '</code></td>' +
+            '<td class="r">' + fmtMem(a.mem) + '</td>' +
+            '<td class="r">' + a.cpu.toFixed(2) + '</td>' +
+            '<td class="r" style="padding-left:1.4rem">' + fmtMem(a.mem * 100) + '</td>' +
+            '<td class="r">' + (a.cpu * 100).toFixed(0) + '</td>';
+          tbody.appendChild(tr);
+        });
+      }
+
+      function init() {
+        var root = document.querySelector('.viz-root');
+        if (!root) return;
+        var colors = getColors(root);
+        var labels = agents.map(function(a) { return a.name; });
+        drawPie('mem-pie', agents.map(function(a) { return a.mem; }), colors, labels, fmtMem);
+        drawPie('cpu-pie', agents.map(function(a) { return a.cpu; }), colors, labels,
+          function(v) { return v.toFixed(2) + ' m'; });
+        buildLegend(colors);
+        buildTable(colors);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+    </script>
+  </section>
+
+  <section>
+    <h2>Model Comparison: Ollama vs Claude Sonnet 5.5</h2>
+    <p>Two test runs were conducted using the same 6 agent types and the same run script. The only variable changed between runs was the model backend.</p>
+    <div class="table-wrap">
+      <table class="gaps">
+        <thead>
+          <tr>
+            <th>Agent type</th>
+            <th>Ollama (local)</th>
+            <th>Claude Sonnet 5.5</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>go-minimal</code></td>
+            <td class="gap-impact">input-required all 17 runs. Ollama asked for clarification instead of answering.</td>
+            <td style="color:var(--good)">completed all 17 runs</td>
+          </tr>
+          <tr>
+            <td><code>python-minimal</code></td>
+            <td class="gap-impact">input-required all 17 runs</td>
+            <td style="color:var(--good)">completed all 17 runs (token counts absent, ADK limitation)</td>
+          </tr>
+          <tr>
+            <td><code>k8s-tools</code></td>
+            <td class="gap-impact">12/17 completed, 2 input-required. High variance: 29ms–219s. Hit 4,096 token context ceiling on every completed run. Output tokens ranged 16-1,842. Model was unpredictable.</td>
+            <td style="color:var(--good)">completed all 17 runs. Avg 6.3s. Consistent 690 output tokens.</td>
+          </tr>
+          <tr>
+            <td><code>promql</code></td>
+            <td class="gap-impact">input-required all 17 runs</td>
+            <td style="color:var(--good)">completed all 17 runs</td>
+          </tr>
+          <tr>
+            <td><code>long-context</code></td>
+            <td class="gap-impact">input-required all 17 runs</td>
+            <td style="color:var(--good)">completed all 17 runs</td>
+          </tr>
+          <tr>
+            <td><code>multiturn</code></td>
+            <td class="gap-impact">input-required all 17 runs</td>
+            <td style="color:var(--good)">12/17 completed, 5 input-required (intentional ambiguity in prompt, correct Claude behaviour)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Ollama returned <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">input-required</code> on 95 of 102 runs. This is a system prompt compliance failure, not a kagent issue. The local test uses llama3 8B on a single GPU via llama.cpp, which is not representative of the production inference stack (vLLM, larger models, EC2 G6e). A meaningful open-model comparison requires EKS access.</p>
+  </section>
+
+  <section>
+    <h2>Findings</h2>
+
+    <h3>1. Go vs Python runtime memory</h3>
+    <p>Go-runtime agent pods idle at 9.5-12 MB RSS (peak at k8s-tools due to tool schema caching). Python-runtime pods idle at 235 MB - 25x more than go-minimal. This is the Python interpreter and google-adk package, present regardless of agent complexity. At scale, Python-runtime agents use significantly more memory per node, reducing pod density. The kagent controller itself is always Go; the runtime setting only affects each agent's own pod.</p>
+
+    <h3>2. Tool-use cost and latency</h3>
+    <p>The k8s-tools agent uses 3,263 prompt tokens vs 642 for a minimal agent - 5x more prompt tokens, 5.8x more total cost per call. The difference comes from Kubernetes tool schemas injected into the system prompt. Latency averaged 6.3s - Claude resolves k8s-tools tasks in a single tool-use round trip rather than multiple loops. All 17 runs completed successfully.</p>
+
+    <h3>3. Tool-call compliance: Claude vs Ollama</h3>
+    <p>All Go agents completed with zero tool-call errors against Claude Sonnet 5.5. The go-multiturn agent returned <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">input-required</code> on 5 of 17 runs. This is correct behaviour for an intentionally ambiguous prompt. Against Ollama, 95 of 102 runs returned <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">input-required</code> regardless of agent type. This is a model compliance issue, not a framework issue. Ollama could not follow the system prompt instructions. See the Model Comparison section above.</p>
+
+    <h3>4. LiteLLM Redis cache skew (go-minimal)</h3>
+    <p>The first two go-minimal runs returned in 108ms and 116ms - LiteLLM Redis cache hits from an earlier test call. The reported avg latency of 1.75s is slightly optimistic; the true per-call avg (runs 3-17) is 2.0s. For latency budgeting, use 2.0s. All other agents had no cache hits - all 17 runs were real LLM calls.</p>
+  </section>
+
+  <section>
+    <h2>Gaps vs Production Stack</h2>
+    <div class="table-wrap">
+      <table class="gaps">
+        <thead>
+          <tr>
+            <th>Missing component</th>
+            <th>Production role</th>
+            <th>Impact on these results</th>
+            <th>Addressable locally?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>llm-d inference layer (LLMInferenceService)</td>
+            <td>Production uses KServe LLMInferenceService v0.20.0 (a separate controller from classic KServe) with the llm-d endpoint picker (<code style="font-family:var(--mono);font-size:12px">llm-d-router-endpoint-picker v0.9.0</code>). The picker does cache-aware routing across GPU pods and disaggregated prefill/decode. Classic KServe is not used in production for LLM serving.</td>
+            <td class="gap-impact">Test used LiteLLM proxying Ollama. Classic KServe is running on the local cluster (Ollama InferenceService in ai-platform), but the LLMInferenceService CRD and llm-d endpoint picker are not installed. No cache-aware routing or disaggregated serving in this test.</td>
+            <td class="gap-impact">Partial - classic KServe already present. Installing llmops-kserve (the LLMInferenceService controller + llm-d) requires the additional chart from the repo. Medium effort, low disruption risk since it adds new CRDs alongside existing ones.</td>
+          </tr>
+          <tr>
+            <td>Envoy Gateway + Agent Router</td>
+            <td>Single front door, EKS token auth, routing to <code style="font-family:var(--mono);font-size:12px">/api/a2a/kagent/&lt;name&gt;/</code>. The AI Gateway ext_proc sidecar counts tokens per request and writes to Valkey quota counters.</td>
+            <td class="gap-impact">Agents called via local Cilium gateway. No auth, no quota enforcement, no token counting at the gateway layer.</td>
+            <td class="gap-impact">No - llmops-gateway chart needs Terraform-provisioned AWS resources (Transit Gateway, VPC endpoints, EKS Pod Identity).</td>
+          </tr>
+          <tr>
+            <td>OPA</td>
+            <td>Two enforcement points: (1) agent access - checks caller's tenant registry for the agent name, 403 otherwise; (2) model access - checks agent's model calls against the tenant's allowed models list. Runs as an Envoy ext_authz filter, reloads registry within ~1 minute of a change.</td>
+            <td class="gap-impact">No enforcement in this test. Any caller can reach any agent and any model. Token usage is not charged to a tenant quota.</td>
+            <td class="gap-impact">Partial - OPA can be deployed locally with the tenant registry, but without the Envoy gateway routing through it, it won't be in the request path.</td>
+          </tr>
+          <tr>
+            <td>Valkey (ElastiCache) quota counters</td>
+            <td>Every response is charged to the tenant's token quota in Valkey. The AI Gateway ext_proc writes the token cost; the quota check blocks requests over-limit before they reach the model.</td>
+            <td class="gap-impact">No quota enforcement. No per-tenant usage accounting. Test ran uncapped against a shared LiteLLM instance.</td>
+            <td class="gap-impact">Partial - Valkey (Redis-compatible) can run locally. Without the AI Gateway ext_proc writing to it, quota enforcement is not in the request path.</td>
+          </tr>
+          <tr>
+            <td>vClusters <strong style="color:var(--good)">(bridged)</strong></td>
+            <td>One virtual cluster per tenant, running as pods in the host namespace. Gives each tenant an isolated Kubernetes API server - they cannot see other tenants or host cluster internals. Agents live on the host cluster; tenants call them from inside their vCluster via the gateway.</td>
+            <td class="gap-impact">Bridged - vCluster v0.37.6 installed, tenant vCluster <code style="font-family:var(--mono);font-size:12px">cappuccino</code> running in <code style="font-family:var(--mono);font-size:12px">vcluster-cappuccino</code>. Called <code style="font-family:var(--mono);font-size:12px">baseline-go-minimal</code> from inside: state completed, 639/115 tokens. Namespace isolation confirmed - only default/kube-system visible from inside. Remaining gap: EKS OIDC JWT auth and the vCluster token injection (MutatingAdmissionPolicy) are not configured.</td>
+            <td class="gap-impact">Done - <code style="font-family:var(--mono);font-size:12px">vcluster create cappuccino --namespace vcluster-cappuccino</code>. Network connectivity to host cluster gateway works without additional config.</td>
+          </tr>
+          <tr>
+            <td>AWS Bedrock - Claude Sonnet 5 <strong style="color:var(--good)">(bridged)</strong></td>
+            <td>Production model is <code style="font-family:var(--mono);font-size:12px">us.anthropic.claude-sonnet-5</code> via Bedrock regional inference profile. Reliable tool-call schema compliance (no ask_user misfires). Latency is lower than local Ollama.</td>
+            <td class="gap-impact">Bridged with <code style="font-family:var(--mono);font-size:12px">claude-sonnet-5-5</code> via the Anthropic API through LiteLLM. Zero tool-call misfires. Token counts and cost estimates in this test use real Sonnet 5.5 rates ($2.00/$10.00 per MTok). Not identical to a managed Bedrock inference profile, but model behaviour and cost profile are equivalent for this test.</td>
+            <td class="gap-impact">Done - LiteLLM ModelConfig updated to <code style="font-family:var(--mono);font-size:12px">claude-sonnet-5-5</code>. ANTHROPIC_API_KEY injected via secret. Remaining gap: Bedrock IAM + regional inference profile routing not tested.</td>
+          </tr>
+          <tr>
+            <td>llmops-agents chart</td>
+            <td>Hardened kagent: external Postgres for agent state, namespaced RBAC, apiKeyPassthrough (caller's EKS token forwarded to the model gateway).</td>
+            <td class="gap-impact">Vanilla upstream kagent chart used. No external database, no caller token passthrough. Agent state lives in the controller's in-cluster store.</td>
+            <td class="gap-impact">Yes - chart is in the repo. llmops-agents wraps upstream kagent with an external Postgres database (already running via kagent-postgresql). Medium effort to swap in. ~1-2 hours.</td>
+          </tr>
+          <tr>
+            <td>Karpenter + GPU nodes (EC2 G6e / L40S)</td>
+            <td>GPU node autoscaling for vLLM. DCGM exporter provides GPU metrics via NVIDIA GPU Operator v26.7.0.</td>
+            <td class="gap-impact">Not relevant for kagent agent pods (CPU-only). Model serving latency in this test reflects local GPU hardware, not EC2 G6e instance performance.</td>
+            <td class="gap-impact">N/A - requires EKS and AWS GPU instances.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">These results establish a kagent agent framework overhead baseline - pod footprint, token throughput, and latency per agent type. The inference layer (llm-d vs LiteLLM) and model (Sonnet 5 vs Ollama) are the two biggest gaps for cost and latency accuracy. Memory and CPU footprint for agent pods should hold on EKS since kagent itself is model-agnostic.</div>
+  </section>
+
+  <section>
+    <h2>Production Gateway Architecture</h2>
+    <p>The Envoy Gateway enforces three things in sequence for every request:</p>
+    <h3>1. Identity</h3>
+    <p>The caller presents a Kubernetes ServiceAccount token. The gateway verifies it and strips any identity headers the client tries to inject. Tenants in vClusters get the token automatically.</p>
+    <h3>2. Authorisation</h3>
+    <p>OPA checks whether this tenant is allowed to call this agent or model. Tenant permissions are managed in a config file and update live without restarting the gateway.</p>
+    <h3>3. Quota</h3>
+    <p>Token usage is counted per response and charged against the tenant's quota in a shared counter store. Requests from tenants over their limit are blocked before reaching the model.</p>
+  </section>
+
+
+</div>

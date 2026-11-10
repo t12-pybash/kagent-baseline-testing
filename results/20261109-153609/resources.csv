@@ -1,0 +1,7 @@
+agent,pod,mem_bytes,cpu_millicores
+baseline-go-minimal,baseline-go-minimal-59bbb47d87-l7659,9908224,0.7532585177476832
+baseline-python-minimal,baseline-python-minimal-f58f4c68f-tw7gs,246427648,8.332751388888898
+baseline-go-k8s-tools,baseline-go-k8s-tools-79d669bfbd-tbd7r,12828672,3.343480131688231
+baseline-go-promql,baseline-go-promql-5bc795d5c5-lxr7l,10620928,0.9936123886333844
+baseline-go-long-context,baseline-go-long-context-6756f469bd-h2sl6,10653696,1.1908831614410025
+baseline-go-multiturn,baseline-go-multiturn-964fcffb5-2dlq4,11395072,1.349060642566283
