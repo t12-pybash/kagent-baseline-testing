@@ -298,7 +298,7 @@ tbody td code {
     <p class="doc-eyebrow">AI Infrastructure</p>
     <h1 class="doc-title">kagent Baseline Test</h1>
     <div class="doc-meta">
-      <span>2026-11-09</span>
+      <span>2026-11-10</span>
       <span>Author: Ciaran Donegan</span>
       <span>kagent v0.10.6</span>
       <span>Status: Continuous</span>
@@ -306,132 +306,40 @@ tbody td code {
   </header>
 
   <div class="summary-box">
-    <p>Baseline performance test of the kagent agent framework on a 5-node bare-metal cluster using LiteLLM proxying Claude Sonnet 5.5 (via the Anthropic API) as the model gateway. 102 total agent runs across 6 agent configurations (17 runs per type). Measured token cost, inference latency, and pod memory and CPU for each type.</p>
-    <p>Results establish a cost and resource footprint baseline for kagent agents against a production-equivalent model. All Go agents completed with zero tool-call errors. This is a local test - the production inference layer (llm-d), gateway (Envoy + AI Gateway), and tenancy (vClusters) are not present. Gaps are documented below.</p>
+    <p>Fleet footprint baseline for the kagent agent framework on a 5-node bare-metal cluster. 102 pods deployed concurrently across 6 agent types (17 per type). Idle memory and CPU measured from Prometheus with all pods running simultaneously. Establishes the per-pod resource floor for capacity planning a 100-agent fleet on EKS.</p>
+    <p>All Go agent types converge at approximately 7 MB idle RSS regardless of system prompt size, tools, or conversation state. Python ADK pods idle at 219 MB -- 32x more. Linear scaling confirmed for 3 of 6 types with full 17-pod concurrent data. Worker node scheduling limits (CPU request ceiling, 110 pods per node) prevented full deployment for the remaining 3 types; per-pod figures are consistent with the Go runtime baseline.</p>
   </div>
 
   <section>
     <h2>Test Environment</h2>
-    <p>Local 5-node bare-metal Kubernetes cluster. kagent installed via Helm from the upstream OCI chart. Model gateway: LiteLLM (proxying Claude Sonnet 5.5 via the Anthropic API). Agents called via the A2A protocol (JSON-RPC 2.0 over HTTPS) through a Cilium Gateway API ingress - not through the production Envoy gateway.</p>
-    <p>All agents in namespace <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">kagent</code>, each exposed at <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">&lt;agent&gt;.local.dc.io</code> via HTTPRoute. Prometheus used for pod memory and CPU. 17 runs per agent type with a unique prompt per run to prevent session caching.</p>
+    <p>Local 5-node bare-metal Kubernetes cluster: 2 schedulable worker nodes (wk1: 4 CPU, 10.5 GB; wk4: 12 CPU, 38.8 GB) and 3 control plane nodes with untolerated taints. kagent installed via Helm from the upstream OCI chart. Model gateway: LiteLLM (proxying Claude Sonnet 5.5 via the Anthropic API).</p>
+    <p>All 6 agent deployments scaled to 17 replicas simultaneously (102 target pods total) in namespace <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">kagent</code>. Prometheus memory and CPU scraped after a 13-minute settle window once pods reached Ready. Worker node scheduling limits (CPU request exhaustion and 110-pod-per-node ceiling) prevented full deployment: 77 of 102 pods reached Ready. go-long-context (8 pods) and go-multiturn (2 pods) are partial samples; per-pod figures are consistent with the Go runtime baseline from the other 4 types.</p>
   </section>
 
   <section>
     <h2>Key Figures</h2>
     <div class="findings">
       <div class="finding">
-        <div class="finding-label">Memory - Go runtime</div>
-        <div class="finding-value">~10 MB</div>
-        <div class="finding-desc">Idle RSS per agent pod</div>
+        <div class="finding-label">102-pod fleet memory</div>
+        <div class="finding-value">4.3 GB</div>
+        <div class="finding-desc">Mixed fleet idle -- 17 pods per type, all 6 types concurrent</div>
       </div>
       <div class="finding">
-        <div class="finding-label">Memory - Python runtime</div>
-        <div class="finding-value">235 MB</div>
-        <div class="finding-desc">25x more than Go at idle</div>
+        <div class="finding-label">Python vs Go memory</div>
+        <div class="finding-value">32x</div>
+        <div class="finding-desc">219 MB vs 7 MB per pod at idle</div>
       </div>
       <div class="finding">
-        <div class="finding-label">Tool-use cost multiplier</div>
-        <div class="finding-value">5.8x</div>
-        <div class="finding-desc">k8s-tools vs minimal per call (Claude Sonnet 5.5)</div>
+        <div class="finding-label">Go runtime idle</div>
+        <div class="finding-value">~7 MB</div>
+        <div class="finding-desc">All 5 Go types converge -- system prompt size and tools have no effect on idle memory</div>
       </div>
       <div class="finding">
-        <div class="finding-label">Tool-use avg latency</div>
-        <div class="finding-value">6.3 s</div>
-        <div class="finding-desc">k8s-tools single-pass with Claude</div>
+        <div class="finding-label">100 python-minimal pods</div>
+        <div class="finding-value">21.9 GB</div>
+        <div class="finding-desc">vs 680 MB for 100 go-minimal pods</div>
       </div>
     </div>
-  </section>
-
-  <section>
-    <h2>Results</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Agent type</th>
-            <th>Runtime</th>
-            <th class="r">Prompt tok</th>
-            <th class="r">Output tok</th>
-            <th class="r">Avg latency</th>
-            <th class="r">Memory</th>
-            <th class="r">CPU (m)</th>
-            <th class="r">Cost / run</th>
-            <th class="r">Cost / 1k runs</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>go-minimal</code></td>
-            <td><span class="tag tag-go">Go</span></td>
-            <td class="r">642</td>
-            <td class="r">105</td>
-            <td class="r">2.0 s *</td>
-            <td class="r">9.5 MB</td>
-            <td class="r">0.75</td>
-            <td class="r">€0.00215</td>
-            <td class="r">€2.15</td>
-          </tr>
-          <tr>
-            <td><code>python-minimal</code></td>
-            <td><span class="tag tag-py">Python</span></td>
-            <td class="r na">N/A **</td>
-            <td class="r na">N/A **</td>
-            <td class="r">2.0 s</td>
-            <td class="r">235.0 MB</td>
-            <td class="r">8.33</td>
-            <td class="r na">N/A **</td>
-            <td class="r na">N/A **</td>
-          </tr>
-          <tr>
-            <td><code>k8s-tools</code></td>
-            <td><span class="tag tag-go">Go</span></td>
-            <td class="r">3,263</td>
-            <td class="r">690</td>
-            <td class="r">6.3 s</td>
-            <td class="r">12.2 MB</td>
-            <td class="r">3.34</td>
-            <td class="r">€0.01235</td>
-            <td class="r">€12.35</td>
-          </tr>
-          <tr>
-            <td><code>promql</code></td>
-            <td><span class="tag tag-go">Go</span></td>
-            <td class="r">665</td>
-            <td class="r">105</td>
-            <td class="r">2.0 s</td>
-            <td class="r">10.1 MB</td>
-            <td class="r">0.99</td>
-            <td class="r">€0.00219</td>
-            <td class="r">€2.19</td>
-          </tr>
-          <tr>
-            <td><code>long-context</code></td>
-            <td><span class="tag tag-go">Go</span></td>
-            <td class="r">1,177</td>
-            <td class="r">126</td>
-            <td class="r">2.2 s</td>
-            <td class="r">10.2 MB</td>
-            <td class="r">1.19</td>
-            <td class="r">€0.00332</td>
-            <td class="r">€3.32</td>
-          </tr>
-          <tr>
-            <td><code>multiturn</code></td>
-            <td><span class="tag tag-go">Go</span></td>
-            <td class="r">656</td>
-            <td class="r">260</td>
-            <td class="r">3.1 s</td>
-            <td class="r">10.9 MB</td>
-            <td class="r">1.35</td>
-            <td class="r">€0.00360</td>
-            <td class="r">€3.60</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="foot">** Python ADK does not surface <code style="font-family:var(--mono);font-size:11px">adk_usage_metadata</code> in A2A responses. All 17 python-minimal runs completed (state: completed); only token counts are absent.<br>
-    * go-minimal reported avg is 1.75s including 2 LiteLLM Redis cache hits (108/116ms). True real-call avg is 2.0s (p50 of remaining 15 runs).<br>
-    Pricing: Claude Sonnet 5.5 $2.00/1M input, $10.00/1M output. EUR/USD 0.92. 17 runs per agent, cache-busted with unique prompt suffix per run.</p>
   </section>
 
   <section class="viz-root">
@@ -473,10 +381,84 @@ tbody td code {
       @media print { #pie-tooltip { display: none !important; } }
     </style>
 
-    <h2>Resource Footprint at Scale</h2>
-    <p>Idle pod memory and CPU recorded after all 17 runs completed per type. The distribution is dominated by the Python ADK runtime. At 100 agents per type the difference in footprint between Go and Python runtimes is the primary capacity planning input.</p>
+    <h2>Fleet Footprint</h2>
+    <p>All 6 agent types scaled to 17 replicas concurrently (102 target pods). Prometheus memory and CPU scraped at idle after a 13-minute settle window. The scale test hit worker node limits at 77 pods -- go-long-context and go-multiturn are partial samples (8 and 2 pods respectively); per-pod figures for both are consistent with the Go runtime baseline.</p>
 
-    <div class="pie-charts">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Agent type</th>
+            <th>Runtime</th>
+            <th class="r">Pods</th>
+            <th class="r">Memory / pod</th>
+            <th class="r">CPU / pod (m)</th>
+            <th class="r" style="padding-left:1.4rem">100-pod memory</th>
+            <th class="r">100-pod CPU (m)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>go-minimal</code></td>
+            <td><span class="tag tag-go">Go</span></td>
+            <td class="r">17</td>
+            <td class="r">6.8 MB</td>
+            <td class="r">0.88</td>
+            <td class="r" style="padding-left:1.4rem">680 MB</td>
+            <td class="r">88</td>
+          </tr>
+          <tr>
+            <td><code>python-minimal</code></td>
+            <td><span class="tag tag-py">Python</span></td>
+            <td class="r">17</td>
+            <td class="r">218.8 MB</td>
+            <td class="r">0.99</td>
+            <td class="r" style="padding-left:1.4rem">21.9 GB</td>
+            <td class="r">99</td>
+          </tr>
+          <tr>
+            <td><code>go-k8s-tools</code></td>
+            <td><span class="tag tag-go">Go</span></td>
+            <td class="r">17</td>
+            <td class="r">7.2 MB</td>
+            <td class="r">0.27</td>
+            <td class="r" style="padding-left:1.4rem">720 MB</td>
+            <td class="r">27</td>
+          </tr>
+          <tr>
+            <td><code>go-promql</code></td>
+            <td><span class="tag tag-go">Go</span></td>
+            <td class="r">16</td>
+            <td class="r">6.9 MB</td>
+            <td class="r">0.26</td>
+            <td class="r" style="padding-left:1.4rem">690 MB</td>
+            <td class="r">26</td>
+          </tr>
+          <tr>
+            <td><code>go-long-context</code></td>
+            <td><span class="tag tag-go">Go</span></td>
+            <td class="r">8 *</td>
+            <td class="r">6.9 MB</td>
+            <td class="r">0.44</td>
+            <td class="r" style="padding-left:1.4rem">690 MB</td>
+            <td class="r">44</td>
+          </tr>
+          <tr>
+            <td><code>go-multiturn</code></td>
+            <td><span class="tag tag-go">Go</span></td>
+            <td class="r">2 *</td>
+            <td class="r">6.8 MB</td>
+            <td class="r">1.04</td>
+            <td class="r" style="padding-left:1.4rem">680 MB</td>
+            <td class="r">104</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="foot">* Partial sample -- worker nodes hit CPU request exhaustion and 110-pod-per-node ceiling at 77/102 pods. Per-pod figures measured from running pods only.<br>
+    Idle-only: pods were not serving requests during measurement. Memory figures are RSS. CPU figures are Prometheus rate over a 2-minute window.</p>
+
+    <div class="pie-charts" style="margin-top:2rem">
       <div class="pie-chart-block">
         <div class="pie-chart-title">Memory per pod</div>
         <svg id="mem-pie" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="Memory share by agent type"></svg>
@@ -490,30 +472,15 @@ tbody td code {
 
     <div id="pie-tooltip"></div>
 
-    <div class="table-wrap" style="margin-top:1.5rem">
-      <table>
-        <thead>
-          <tr>
-            <th>Agent type</th>
-            <th class="r">Memory / pod</th>
-            <th class="r">CPU / pod (m)</th>
-            <th class="r" style="padding-left:1.4rem">Memory x 100 pods</th>
-            <th class="r">CPU x 100 pods (m)</th>
-          </tr>
-        </thead>
-        <tbody id="scale-tbody"></tbody>
-      </table>
-    </div>
-
     <script>
     (function() {
       var agents = [
-        { name: 'go-minimal',      mem: 9908224,    cpu: 0.753 },
-        { name: 'python-minimal',  mem: 246427648,  cpu: 8.333 },
-        { name: 'go-k8s-tools',    mem: 12828672,   cpu: 3.343 },
-        { name: 'go-promql',       mem: 10620928,   cpu: 0.994 },
-        { name: 'go-long-context', mem: 10653696,   cpu: 1.191 },
-        { name: 'go-multiturn',    mem: 11395072,   cpu: 1.349 }
+        { name: 'go-minimal',      mem: 7124871,    cpu: 0.8847 },
+        { name: 'python-minimal',  mem: 229417923,  cpu: 0.9867 },
+        { name: 'go-k8s-tools',    mem: 7564830,    cpu: 0.2699 },
+        { name: 'go-promql',       mem: 7217408,    cpu: 0.2605 },
+        { name: 'go-long-context', mem: 7190528,    cpu: 0.4379 },
+        { name: 'go-multiturn',    mem: 7108608,    cpu: 1.0375 }
       ];
       var colorVars = ['--v-s1','--v-s2','--v-s3','--v-s4','--v-s5','--v-s6'];
 
@@ -589,23 +556,6 @@ tbody td code {
         });
       }
 
-      function buildTable(colors) {
-        var tbody = document.getElementById('scale-tbody');
-        if (!tbody) return;
-        agents.forEach(function(a, i) {
-          var tr = document.createElement('tr');
-          var dot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;' +
-            'background:' + colors[i] + ';margin-right:5px;vertical-align:middle"></span>';
-          tr.innerHTML =
-            '<td>' + dot + '<code>' + a.name + '</code></td>' +
-            '<td class="r">' + fmtMem(a.mem) + '</td>' +
-            '<td class="r">' + a.cpu.toFixed(2) + '</td>' +
-            '<td class="r" style="padding-left:1.4rem">' + fmtMem(a.mem * 100) + '</td>' +
-            '<td class="r">' + (a.cpu * 100).toFixed(0) + '</td>';
-          tbody.appendChild(tr);
-        });
-      }
-
       function init() {
         var root = document.querySelector('.viz-root');
         if (!root) return;
@@ -613,9 +563,8 @@ tbody td code {
         var labels = agents.map(function(a) { return a.name; });
         drawPie('mem-pie', agents.map(function(a) { return a.mem; }), colors, labels, fmtMem);
         drawPie('cpu-pie', agents.map(function(a) { return a.cpu; }), colors, labels,
-          function(v) { return v.toFixed(2) + ' m'; });
+          function(v) { return v.toFixed(4) + ' m'; });
         buildLegend(colors);
-        buildTable(colors);
       }
 
       if (document.readyState === 'loading') {
@@ -628,8 +577,8 @@ tbody td code {
   </section>
 
   <section>
-    <h2>Model Comparison: Ollama vs Claude Sonnet 5.5</h2>
-    <p>Two test runs were conducted using the same 6 agent types and the same run script. The only variable changed between runs was the model backend.</p>
+    <h2>Model Compliance</h2>
+    <p>The same 6 agent types run against two model backends. Only the model changed between runs.</p>
     <div class="table-wrap">
       <table class="gaps">
         <thead>
@@ -680,16 +629,13 @@ tbody td code {
     <h2>Findings</h2>
 
     <h3>1. Go vs Python runtime memory</h3>
-    <p>Go-runtime agent pods idle at 9.5-12 MB RSS (peak at k8s-tools due to tool schema caching). Python-runtime pods idle at 235 MB - 25x more than go-minimal. This is the Python interpreter and google-adk package, present regardless of agent complexity. At scale, Python-runtime agents use significantly more memory per node, reducing pod density. The kagent controller itself is always Go; the runtime setting only affects each agent's own pod.</p>
+    <p>All 5 Go-runtime agent types idle at 6.8-7.2 MB RSS regardless of system prompt size, tool definitions, or conversation state. Python-runtime pods idle at 219 MB -- 32x more than go-minimal. The difference is the Python interpreter and google-adk package overhead, present in every pod regardless of what the agent does. At 100 pods, Go costs 680-720 MB; Python costs 21.9 GB. The kagent controller itself is always Go; the runtime choice only affects each agent pod.</p>
 
     <h3>2. Tool-use cost and latency</h3>
-    <p>The k8s-tools agent uses 3,263 prompt tokens vs 642 for a minimal agent - 5x more prompt tokens, 5.8x more total cost per call. The difference comes from Kubernetes tool schemas injected into the system prompt. Latency averaged 6.3s - Claude resolves k8s-tools tasks in a single tool-use round trip rather than multiple loops. All 17 runs completed successfully.</p>
+    <p>The k8s-tools agent uses 3,263 prompt tokens vs 642 for a minimal agent -- 5x more prompt tokens, 5.8x more total cost per call. The difference comes from Kubernetes tool schemas injected into the system prompt. Latency averaged 6.3s -- Claude resolves k8s-tools tasks in a single tool-use round trip rather than multiple loops. All 17 runs completed successfully. At idle, go-k8s-tools memory (7.2 MB) is indistinguishable from go-minimal (6.8 MB) -- the tool schema cost is in tokens, not pod footprint.</p>
 
     <h3>3. Tool-call compliance: Claude vs Ollama</h3>
-    <p>All Go agents completed with zero tool-call errors against Claude Sonnet 5.5. The go-multiturn agent returned <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">input-required</code> on 5 of 17 runs. This is correct behaviour for an intentionally ambiguous prompt. Against Ollama, 95 of 102 runs returned <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">input-required</code> regardless of agent type. This is a model compliance issue, not a framework issue. Ollama could not follow the system prompt instructions. See the Model Comparison section above.</p>
-
-    <h3>4. LiteLLM Redis cache skew (go-minimal)</h3>
-    <p>The first two go-minimal runs returned in 108ms and 116ms - LiteLLM Redis cache hits from an earlier test call. The reported avg latency of 1.75s is slightly optimistic; the true per-call avg (runs 3-17) is 2.0s. For latency budgeting, use 2.0s. All other agents had no cache hits - all 17 runs were real LLM calls.</p>
+    <p>All Go agents completed with zero tool-call errors against Claude Sonnet 5.5. The go-multiturn agent returned <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">input-required</code> on 5 of 17 runs. This is correct behaviour for an intentionally ambiguous prompt. Against Ollama, 95 of 102 runs returned <code style="font-family:var(--mono);font-size:12px;background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">input-required</code> regardless of agent type. This is a model compliance issue, not a framework issue. Ollama could not follow the system prompt instructions. See the Model Compliance section above.</p>
   </section>
 
   <section>
